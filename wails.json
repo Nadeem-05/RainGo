@@ -1,0 +1,14 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "rbg-wails",
+  "wailsjsdir" : "./frontend/src/lib",
+  "outputfilename": "rbg-wails",
+  "frontend:install": "pnpm install",
+  "frontend:build": "pnpm run build",
+  "frontend:dev:watcher": "pnpm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Nadeem",
+    "email": "m.nadeem83005@gmail.com"
+  }
+}
