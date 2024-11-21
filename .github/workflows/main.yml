@@ -28,6 +28,8 @@ jobs:
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
       - name: Checkout
         uses: actions/checkout@v2
         with:
