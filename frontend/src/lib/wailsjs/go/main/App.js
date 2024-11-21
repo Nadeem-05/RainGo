@@ -6,16 +6,16 @@ export function AddEntries(arg1) {
   return window['go']['main']['App']['AddEntries'](arg1);
 }
 
-export function GetEntries(arg1) {
-  return window['go']['main']['App']['GetEntries'](arg1);
+export function GetEntries(arg1, arg2) {
+  return window['go']['main']['App']['GetEntries'](arg1, arg2);
 }
 
 export function GetPassword(arg1) {
   return window['go']['main']['App']['GetPassword'](arg1);
 }
 
-export function GetTotalEntries() {
-  return window['go']['main']['App']['GetTotalEntries']();
+export function GetTotalEntries(arg1) {
+  return window['go']['main']['App']['GetTotalEntries'](arg1);
 }
 
 export function Greet(arg1) {

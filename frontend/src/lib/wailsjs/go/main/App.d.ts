@@ -4,11 +4,11 @@ import {main} from '../models';
 
 export function AddEntries(arg1:Array<main.Entry>):Promise<boolean>;
 
-export function GetEntries(arg1:number):Promise<Array<main.Entry>>;
+export function GetEntries(arg1:number,arg2:boolean):Promise<Array<main.Entry>>;
 
 export function GetPassword(arg1:string):Promise<string>;
 
-export function GetTotalEntries():Promise<number>;
+export function GetTotalEntries(arg1:boolean):Promise<number>;
 
 export function Greet(arg1:string):Promise<string>;
 

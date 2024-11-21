@@ -7,20 +7,22 @@
     NavUl,
     NavHamburger,
   } from "flowbite-svelte";
-  
+
   import type { main } from "$lib/wailsjs/go/models";
   import { GetEntries } from "$lib/wailsjs/go/main/App";
   //@ts-ignore
   import { GetTotalEntries } from "$lib/wailsjs/go/main/App";
   import { onMount } from "svelte";
+
   let entries: main.Entry[] = [];
   let loading = true;
-  let totalItems = 0;  // Initialize to 0
+  let totalItems = 0; // Initialize to 0
   let itemsPerPage = 10;
-  $: totalPages = Math.ceil(totalItems / itemsPerPage);  // Make it reactive
+  let usePostgres = false; // Toggle for database selection
+  $: totalPages = Math.ceil(totalItems / itemsPerPage); // Make it reactive
   let error: string | null = null;
   let currentPage: number = 1;
-  
+
   $: helper = { 
     start: (currentPage - 1) * itemsPerPage + 1,
     end: Math.min(currentPage * itemsPerPage, totalItems),
@@ -31,7 +33,7 @@
     loading = true;
     error = null;
     try {
-        const result = await GetEntries(page);
+        const result = await GetEntries(page, usePostgres); // Pass `usePostgres` to the backend
         if (result) {
             entries = result;
         }
@@ -45,17 +47,17 @@
 
   async function getTotalItems() {
     try {
-        const total = await GetTotalEntries();
-        totalItems = total; 
+        const total = await GetTotalEntries(usePostgres); 
+        totalItems = total;
     } catch (err) {
         console.error("Error fetching total entries:", err);
         error = err instanceof Error ? err.message : 'An error occurred while fetching total count';
     }
   }
 
-  onMount(async () => {  // Make onMount async
-    await getTotalItems();  // Wait for total count
-    await fetchData(currentPage);  // Then fetch first page
+  onMount(async () => {
+    await getTotalItems();
+    await fetchData(currentPage);
   });
 
   const previous = async (): Promise<void> => {
@@ -71,10 +73,14 @@
       await fetchData(currentPage);
     }
   };
+
+  const toggleDatabase = async (): Promise<void> => {
+    usePostgres = !usePostgres; // Toggle between databases
+    await getTotalItems(); // Recalculate total items for the selected database
+    await fetchData(currentPage); // Fetch data from the selected database
+  };
 </script>
 
-<!-- svelte-ignore css_unused_selector -->
-<!-- svelte-ignore css_unused_selector -->
 <Navbar rounded class="bg-transparent dark shadow-md">
   <NavBrand href="/">
       <img src="src/images/favicon.png" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" />
@@ -91,12 +97,19 @@
 </Navbar>
 
 <div class="container mx-auto">
+  <button 
+    on:click={toggleDatabase} 
+    class="mb-4 px-4 py-2 text-sm font-medium -mt-48 border rounded-lg bg-gray-800 border-gray-700 text-gray-400  hover:bg-gray-700"
+  >
+    {usePostgres ? "Switch to Local DB" : "Switch to PostgreSQL"}
+  </button>
+
   {#if loading}
     <div class="text-center p-4 dark:text-white">Loading...</div>
   {:else if error}
     <div class="text-center p-4 text-red-500">{error}</div>
   {:else}
-    <Table classInput="dark float-end1" classSvgDiv="hidden" placeholder="Search by maker name" hoverable={true} class="dark w-full mx-auto mb-5 shadow-md rounded-lg">
+    <Table classInput="dark float-end1" classSvgDiv="hidden" placeholder="Search by maker name" hoverable={true} class="dark w-full  mx-auto mb-5 shadow-md rounded-lg">
       <TableHead>
           <TableHeadCell>ID</TableHeadCell>
           <TableHeadCell>Maker</TableHeadCell>
@@ -117,7 +130,7 @@
   {/if}
 </div>
 
-<div class="flex flex-col items-center dark justify-center gap-4">
+<div class="flex flex-col items-center dark justify-center gap-4 -mt-5">
   <div class="text-sm text-gray-700 dark:text-gray-400">
     Showing <span class="font-semibold text-gray-900 dark:text-white">{helper.start}</span>
     to
@@ -143,6 +156,7 @@
     </button>
   </div>
 </div>
+
 
 <style>
   :global(html) {
@@ -178,4 +192,3 @@
   }
 </style>
 
-<!-- Rest of your template remains the same -->

@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -20,6 +19,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.org/x/crypto/ripemd160"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -52,33 +52,49 @@ func computeRIPEMD(password string) string {
 }
 
 func (a *App) connectDB() {
+	// PostgreSQL connection
 	dsn := "host=localhost user=driver password=riyalsecret dbname=hash port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to connect to PostgreSQL: %v", err)
 	}
-
+	// SQLite connection
+	localdb, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Failed to connect to SQLite: %v", err)
+	}
+	// Configure PostgreSQL
 	sqldb, err := db.DB()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to configure PostgreSQL: %v", err)
 	}
-
 	sqldb.SetMaxIdleConns(10)
 	sqldb.SetMaxOpenConns(100)
 	sqldb.SetConnMaxLifetime(time.Hour)
 
+	// Migrate schemas
 	if err := db.AutoMigrate(&Entry{}); err != nil {
-		panic(err)
+		log.Fatalf("Failed to migrate PostgreSQL schema: %v", err)
+	}
+	if err := localdb.AutoMigrate(&Entry{}); err != nil {
+		log.Fatalf("Failed to migrate SQLite schema: %v", err)
 	}
 
 	a.db = db
-
-	fmt.Print(a.GetEntries(1))
+	a.localdb = localdb
+	log.Println("Databases connected successfully!")
 }
-
 func (a *App) GetPassword(hash string) string {
 	var entry Entry
-	result := a.db.Where("hash = ?", hash).First(&entry)
+
+	// Check local database
+	result := a.localdb.Where("hash = ?", hash).First(&entry)
+	if result.Error == nil {
+		return entry.Password
+	}
+
+	// If not found in local, check PostgreSQL database
+	result = a.db.Where("hash = ?", hash).First(&entry)
 	if result.Error != nil {
 		runtime.LogError(a.ctx, "Error fetching password: "+result.Error.Error())
 		return "Failed"
@@ -86,11 +102,30 @@ func (a *App) GetPassword(hash string) string {
 	return entry.Password
 }
 
+func (a *App) GetEntries(page int, usePostgres bool) []Entry {
+	var entries []Entry
+	offset := (page - 1) * 10
+
+	var dbToQuery *gorm.DB
+	if usePostgres {
+		dbToQuery = a.db
+	} else {
+		dbToQuery = a.localdb
+	}
+
+	err := dbToQuery.Limit(10).Offset(offset).Find(&entries).Error
+	if err != nil {
+		runtime.LogError(a.ctx, "Error fetching entries: "+err.Error())
+		return nil
+	}
+	return entries
+}
+
 func (a *App) StartHashing(passwords []string) {
 	passwordChan := make(chan string, len(passwords))
 	resultChan := make(chan Entry, len(passwords))
 
-	workers := 10
+	workers := 6
 	var wg sync.WaitGroup
 
 	worker := func() {
@@ -138,57 +173,58 @@ func (a *App) StartHashing(passwords []string) {
 	runtime.EventsEmit(a.ctx, "hashingStarted", len(passwords))
 }
 
-func (a *App) GetEntries(page int) []Entry {
-	var entries []Entry
-	result := a.db.Limit(10).Offset((page - 1) * 10).Find(&entries)
-	if result.Error != nil {
-		runtime.LogError(a.ctx, "Error fetching entries: "+result.Error.Error())
-		return []Entry{}
+func (a *App) GetTotalEntries(usePostgres bool) int64 {
+	var total int64
+	if usePostgres {
+		err := a.db.Model(&Entry{}).Count(&total).Error
+		if err != nil {
+			runtime.LogError(a.ctx, "Error counting total entries: "+err.Error())
+			return 0
+		}
+		return total
 	}
-	return entries
-}
-
-func (a *App) GetTotalEntries() int64 {
-	var count int64
-	var count2 int64
-	result := a.db.Model(&Entry{}).Count(&count)
-	SHA256 := a.db.Where("type = ?", "SHA256").Count(&count2)
-	fmt.Print(SHA256)
-	if result.Error != nil {
-		runtime.LogError(a.ctx, "Error fetching total entries: "+result.Error.Error())
+	err := a.localdb.Model(&Entry{}).Count(&total).Error
+	if err != nil {
+		runtime.LogError(a.ctx, "Error counting total entries: "+err.Error())
 		return 0
 	}
-	return count
+	return total
 }
 
 func (a *App) AddEntries(newEntries []Entry) bool {
-	batchSize := 10000
-	batch := make([]Entry, 0, batchSize)
+	batchSize := 1000 // Adjust batch size for optimal performance
+	var batch []Entry
 
 	for _, entry := range newEntries {
-		var existingEntry Entry
-		result := a.db.Where("hash = ?", entry.Hash).First(&existingEntry)
-		if result.Error == gorm.ErrRecordNotFound {
+		var existing Entry
+		err := a.localdb.Where("hash = ?", entry.Hash).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
 			batch = append(batch, entry)
+		} else if err != nil {
+			runtime.LogError(a.ctx, "Error checking existing entry: "+err.Error())
+			return false
 		}
+		// Insert batch when it reaches the batch size
 		if len(batch) >= batchSize {
-			if err := a.db.Create(&batch).Error; err != nil {
+			if err := a.localdb.Create(&batch).Error; err != nil {
 				runtime.LogError(a.ctx, "Error inserting batch: "+err.Error())
 				return false
 			}
-			log.Printf("%d entries inserted successfully", len(batch))
+			log.Printf("Inserted batch of %d entries", len(batch))
 			batch = batch[:0]
 		}
 	}
 
+	// Insert remaining entries
 	if len(batch) > 0 {
-		if err := a.db.Create(&batch).Error; err != nil {
+		if err := a.localdb.Create(&batch).Error; err != nil {
 			runtime.LogError(a.ctx, "Error inserting final batch: "+err.Error())
 			return false
 		}
-		log.Printf("%d entries inserted successfully", len(batch))
+		log.Printf("Inserted final batch of %d entries", len(batch))
 	}
-	return false
+
+	return true
 }
 
 func main() {

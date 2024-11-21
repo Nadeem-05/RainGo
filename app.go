@@ -10,8 +10,9 @@ import (
 )
 
 type App struct {
-	ctx context.Context
-	db  *gorm.DB
+	ctx     context.Context
+	db      *gorm.DB
+	localdb *gorm.DB
 }
 
 func NewApp() *App {

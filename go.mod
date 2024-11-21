@@ -8,6 +8,7 @@ require (
 	github.com/wailsapp/wails/v2 v2.9.2
 	golang.org/x/crypto v0.29.0
 	gorm.io/driver/postgres v1.5.9
+	gorm.io/driver/sqlite v1.5.6
 	gorm.io/gorm v1.25.12
 )
 
@@ -31,6 +32,7 @@ require (
 	github.com/leaanthony/u v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
