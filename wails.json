@@ -1,6 +1,6 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "rbg-wails",
+  "name": "Raingo",
   "wailsjsdir" : "./frontend/src/lib",
   "outputfilename": "Raingo",
   "frontend:install": "pnpm install",

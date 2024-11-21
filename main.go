@@ -436,7 +436,7 @@ func main() {
 			// Icon:                icon,
 			WindowIsTranslucent: false,
 			WebviewGpuPolicy:    linux.WebviewGpuPolicyAlways,
-			ProgramName:         "Rainbow Password Cracker",
+			ProgramName:         "Raingo",
 		},
 		Debug: options.Debug{
 			OpenInspectorOnStartup: false,
