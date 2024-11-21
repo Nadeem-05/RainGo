@@ -26,6 +26,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:embed all:frontend/build
 var assets embed.FS
 
 type Entry struct {
@@ -391,7 +392,7 @@ func (a *App) AddEntries(newEntries []Entry) bool {
 func main() {
 	app := NewApp()
 	err := wails.Run(&options.App{
-		Title:  "Rainbow Password Cracker",
+		Title:  "Raingo",
 		Width:  1920,
 		Height: 1080,
 		AssetServer: &assetserver.Options{
@@ -426,7 +427,7 @@ func main() {
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  false,
 			About: &mac.AboutInfo{
-				Title:   "Rainbow Password Cracker",
+				Title:   "Raingo",
 				Message: "idk",
 				// Icon:    icon,
 			},

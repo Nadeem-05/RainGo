@@ -2,7 +2,7 @@
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "rbg-wails",
   "wailsjsdir" : "./frontend/src/lib",
-  "outputfilename": "rbg-wails",
+  "outputfilename": "Raingo",
   "frontend:install": "pnpm install",
   "frontend:build": "pnpm run build",
   "frontend:dev:watcher": "pnpm run dev",
