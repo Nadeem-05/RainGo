@@ -41,6 +41,13 @@ type Meta struct {
 	Value string `json:"value"`
 }
 
+type DBAccessLog struct {
+	ID         uint      `gorm:"primaryKey"`
+	AccessedAt time.Time `gorm:"column:accessed_at"`
+	UserID     uint      `gorm:"column:user_id"`
+	Query      string    `gorm:"column:query"`
+}
+
 func computeMD5(password string) string {
 	hash := md5.Sum([]byte(password))
 	return hex.EncodeToString(hash[:])
