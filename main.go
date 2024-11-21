@@ -7,9 +7,12 @@ import (
 	"embed"
 	"encoding/hex"
 	"log"
+	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -33,6 +36,11 @@ type Entry struct {
 	Source   string `json:"source"`
 }
 
+type Meta struct {
+	Point string `json:"point"`
+	Value string `json:"value"`
+}
+
 func computeMD5(password string) string {
 	hash := md5.Sum([]byte(password))
 	return hex.EncodeToString(hash[:])
@@ -52,18 +60,15 @@ func computeRIPEMD(password string) string {
 }
 
 func (a *App) connectDB() {
-	// PostgreSQL connection
 	dsn := "host=localhost user=driver password=riyalsecret dbname=hash port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to PostgreSQL: %v", err)
 	}
-	// SQLite connection
 	localdb, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to SQLite: %v", err)
 	}
-	// Configure PostgreSQL
 	sqldb, err := db.DB()
 	if err != nil {
 		log.Fatalf("Failed to configure PostgreSQL: %v", err)
@@ -72,7 +77,6 @@ func (a *App) connectDB() {
 	sqldb.SetMaxOpenConns(100)
 	sqldb.SetConnMaxLifetime(time.Hour)
 
-	// Migrate schemas
 	if err := db.AutoMigrate(&Entry{}); err != nil {
 		log.Fatalf("Failed to migrate PostgreSQL schema: %v", err)
 	}
@@ -84,22 +88,74 @@ func (a *App) connectDB() {
 	a.localdb = localdb
 	log.Println("Databases connected successfully!")
 }
+func scraper(hash string, hashtype string) (string, error) {
+	var url string
+	if hashtype == "SHA1" {
+		url = "https://sha1.gromweb.com/?sha1=" + hash
+	} else {
+		url = "https://md5.gromweb.com/?md5=" + hash
+	}
+	res, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("Error fetching the URL: %v", err)
+		return "", err
+	}
+	defer res.Body.Close()
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatalf("Error loading HTML document: %v", err)
+		return "", err
+	}
+	word := doc.Find(".String").First().Text()
+	if word != "" {
+		return word, nil
+	} else {
+		return "", nil
+	}
+
+}
 func (a *App) GetPassword(hash string) string {
 	var entry Entry
 
-	// Check local database
-	result := a.localdb.Where("hash = ?", hash).First(&entry)
-	if result.Error == nil {
+	if err := a.localdb.Where("hash = ?", hash).First(&entry).Error; err == nil {
 		return entry.Password
 	}
 
-	// If not found in local, check PostgreSQL database
-	result = a.db.Where("hash = ?", hash).First(&entry)
-	if result.Error != nil {
-		runtime.LogError(a.ctx, "Error fetching password: "+result.Error.Error())
+	if err := a.db.Where("hash = ?", hash).First(&entry).Error; err == nil {
+		return entry.Password
+	}
+
+	hashType := getHashType(hash)
+	if hashType == "Unknown" {
+		runtime.LogError(a.ctx, "Unknown hash type for: "+hash)
 		return "Failed"
 	}
+
+	result, err := scraper(hash, hashType)
+	if result == "password" {
+		return "Failed"
+	}
+	if err != nil {
+		runtime.LogError(a.ctx, "Error scraping password: "+err.Error())
+		return "Failed"
+	}
+
+	entry.Password = result
+	if err := a.localdb.Create(&entry).Error; err != nil {
+		runtime.LogError(a.ctx, "Error saving scraped password: "+err.Error())
+	}
 	return entry.Password
+}
+
+func getHashType(hash string) string {
+	switch len(hash) {
+	case 32:
+		return "MD5"
+	case 40:
+		return "SHA1"
+	default:
+		return "Unknown"
+	}
 }
 
 func (a *App) GetEntries(page int, usePostgres bool) []Entry {
@@ -173,6 +229,107 @@ func (a *App) StartHashing(passwords []string) {
 	runtime.EventsEmit(a.ctx, "hashingStarted", len(passwords))
 }
 
+func (a *App) GetMeta() [][]Meta {
+	// Create a wait group for concurrent database queries
+	var wg sync.WaitGroup
+
+	// Create channels to collect results
+	pieResultChan := make(chan []Meta, 1)
+	barResultChan := make(chan []Meta, 1)
+
+	// Slice to store final results
+	var TotalMeta [][]Meta
+
+	// Hash types query
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		// Prepare a slice to hold results
+		pie := make([]Meta, 0, 4)
+
+		// Use a prepared statement to reduce query overhead
+		hashTypes := []string{"MD5", "SHA1", "SHA256", "RIPEMD"}
+
+		// Temporary struct to hold query results
+		type HashCount struct {
+			Type  string `gorm:"column:type"`
+			Count int64  `gorm:"column:count"`
+		}
+
+		// Slice to hold query results
+		var hashCounts []HashCount
+
+		// Perform the grouped query
+		if err := a.db.Model(&Entry{}).
+			Select("type", "COUNT(*) as count").
+			Where("type IN (?)", hashTypes).
+			Group("type").
+			Find(&hashCounts).Error; err != nil {
+			log.Printf("Error querying hash types: %v", err)
+			pieResultChan <- pie
+			return
+		}
+
+		// Create a map to track counts for each hash type
+		countMap := make(map[string]int64)
+		for _, hc := range hashCounts {
+			countMap[hc.Type] = hc.Count
+		}
+
+		// Populate pie chart data
+		for _, hashType := range hashTypes {
+			count := countMap[hashType]
+			pie = append(pie, Meta{
+				Point: hashType,
+				Value: strconv.FormatInt(count, 10),
+			})
+		}
+
+		pieResultChan <- pie
+	}()
+
+	// Database count query
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		// Prepare a slice to hold results
+		bar := make([]Meta, 0, 2)
+
+		// Perform a single query to get both database counts
+		var localdbCount, dbCount int64
+		localResult := a.localdb.Model(&Entry{}).Count(&localdbCount)
+		dbResult := a.db.Model(&Entry{}).Count(&dbCount)
+
+		// Check for errors
+		if localResult.Error != nil {
+			log.Printf("Error querying localdb: %v", localResult.Error)
+		}
+		if dbResult.Error != nil {
+			log.Printf("Error querying db: %v", dbResult.Error)
+		}
+
+		// Populate bar chart data
+		bar = append(bar,
+			Meta{Point: "LocalDB", Value: strconv.FormatInt(localdbCount, 10)},
+			Meta{Point: "Postgres", Value: strconv.FormatInt(dbCount, 10)},
+		)
+
+		barResultChan <- bar
+	}()
+
+	wg.Wait()
+
+	close(pieResultChan)
+	close(barResultChan)
+
+	// Collect results
+	TotalMeta = append(TotalMeta, <-pieResultChan)
+	TotalMeta = append(TotalMeta, <-barResultChan)
+
+	return TotalMeta
+}
 func (a *App) GetTotalEntries(usePostgres bool) int64 {
 	var total int64
 	if usePostgres {
@@ -204,7 +361,6 @@ func (a *App) AddEntries(newEntries []Entry) bool {
 			runtime.LogError(a.ctx, "Error checking existing entry: "+err.Error())
 			return false
 		}
-		// Insert batch when it reaches the batch size
 		if len(batch) >= batchSize {
 			if err := a.localdb.Create(&batch).Error; err != nil {
 				runtime.LogError(a.ctx, "Error inserting batch: "+err.Error())
@@ -214,8 +370,6 @@ func (a *App) AddEntries(newEntries []Entry) bool {
 			batch = batch[:0]
 		}
 	}
-
-	// Insert remaining entries
 	if len(batch) > 0 {
 		if err := a.localdb.Create(&batch).Error; err != nil {
 			runtime.LogError(a.ctx, "Error inserting final batch: "+err.Error())
@@ -231,8 +385,8 @@ func main() {
 	app := NewApp()
 	err := wails.Run(&options.App{
 		Title:  "Rainbow Password Cracker",
-		Width:  1024,
-		Height: 768,
+		Width:  1920,
+		Height: 1080,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

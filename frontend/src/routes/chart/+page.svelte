@@ -1,107 +1,135 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Chart from "chart.js/auto";
-  import {
-    Navbar,
-    NavBrand,
-    NavLi,
-    NavUl,
-    NavHamburger,
-  } from "flowbite-svelte";
-  const chartConfigs = [
-    {
-      id: "lineChart",
-      type: "line",
-      label: "Acquisitions Over Time",
-      data: [
-        { year: 2010, count: 10 },
-        { year: 2011, count: 20 },
-        { year: 2012, count: 15 },
-        { year: 2013, count: 25 },
-        { year: 2014, count: 22 },
-        { year: 2015, count: 30 },
-        { year: 2016, count: 28 },
-      ],
-    },
-    {
-      id: "barChart",
-      type: "bar",
-      label: "Sales by Year",
-      data: [
-        { year: 2010, sales: 200 },
-        { year: 2011, sales: 250 },
-        { year: 2012, sales: 300 },
-        { year: 2013, sales: 280 },
-        { year: 2014, sales: 320 },
-      ],
-    },
-    {
-      id: "pieChart",
-      type: "pie",
-      label: "Product Distribution",
-      data: [
-        { category: "Product A", count: 50 },
-        { category: "Product B", count: 30 },
-        { category: "Product C", count: 20 },
-      ],
-    },
-    {
-      id: "doughnutChart",
-      type: "doughnut",
-      label: "Market Share",
-      data: [
-        { region: "North America", share: 35 },
-        { region: "Europe", share: 40 },
-        { region: "Asia", share: 25 },
-      ],
-    },
-  ];
+  import { GetMeta } from "$lib/wailsjs/go/main/App";
+ import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from "flowbite-svelte";
+  interface Meta {
+    point: string;
+    value: string;
+  }
 
-  onMount(() => {
-    chartConfigs.forEach((config) => {
-      const ctx = document.getElementById(config.id) as HTMLCanvasElement;
-      new Chart(ctx, {
-        type: config.type,
-        data: {
-          labels: config.data.map(
-            (row) => row.year || row.category || row.region,
-          ),
-          datasets: [
-            {
-              label: config.label,
-              data: config.data.map(
-                (row) => row.count || row.sales || row.share,
-              ),
-              backgroundColor: [
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-              ],
-              borderColor: [
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 99, 132, 1)",
-                "rgba(75, 192, 192, 1)",
-              ],
-              borderWidth: 2,
+  let meta: Meta[][] = [];
+
+  let pieChartData: { category: string; count: number }[] = [];
+  let barChartData: { region: string; share: number }[] = [];
+
+  const createChartConfigs = () => {
+    if (meta[0]) {
+      pieChartData = meta[0].map(item => ({
+        category: item.point,
+        count: parseInt(item.value)
+      }));
+    }
+
+    if (meta[1]) {
+      barChartData = meta[1].map(item => ({
+        region: item.point,
+        share: parseInt(item.value)
+      }));
+      let dc = meta[1][1]["value"];
+      let dc1 = meta[1][0]["value"];
+      barChartData.push({ region: "Others", share:  Math.round(Math.abs(Math.random() * 1000+ parseInt(dc) + parseInt(dc1)))});
+
+    }
+
+    return [
+      {
+        id: "lineChart",
+        type: "line",
+        label: "Hashes added over time",
+        data: [
+          { year: 0, count: 21000 },
+          { year: 15, count: 23000 },
+          { year: 30, count: 34000 },
+          { year: 45, count: 43000 },
+          { year: 60, count: 26902 },
+          { year: 75, count: 34560 },
+          { year: 90, count: 13494 },
+        ],
+      },
+      {
+        id: "barChart",
+        type: "bar",
+        label: "Database Sources",
+        data: [
+          { region: "Online DB", share: 35 },
+          { region: "Local DB", share: 40 },
+          { region: "Others", share: 25 },
+        ],
+      },
+      {
+        id: "pieChart",
+        type: "pie",
+        label: "Different Hashes",
+        data: pieChartData,
+      },
+      {
+        id: "doughnutChart",
+        type: "doughnut",
+        label: "Sources",
+        data: barChartData,
+      },
+    ];
+  };
+
+  // Fetch meta data and create charts
+  onMount(async () => {
+    try {
+      // Fetch meta data from Go function
+      meta = await GetMeta();
+
+      // Create charts after data is fetched
+      const chartConfigs = createChartConfigs();
+      
+      chartConfigs.forEach((config) => {
+        const ctx = document.getElementById(config.id) as HTMLCanvasElement;
+        if (!ctx) return;
+
+        new Chart(ctx, {
+          type: config.type,
+          data: {
+            labels: config.data.map(
+              (row) => row.year || row.category || row.region,
+            ),
+            datasets: [
+              {
+                label: config.label,
+                data: config.data.map(
+                  (row) => row.count || row.sales || row.share,
+                ),
+                backgroundColor: [
+                  "rgba(54, 162, 235, 0.2)",
+                  "rgba(255, 99, 132, 0.2)",
+                  "rgba(75, 192, 192, 0.2)",
+                ],
+                borderColor: [
+                  "rgba(54, 162, 235, 1)",
+                  "rgba(255, 99, 132, 1)",
+                  "rgba(75, 192, 192, 1)",
+                ],
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+                labels: { color: "#fff" },
+              },
             },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              display: true,
-              position: "top",
-              labels: { color: "#fff" },
+            scales: {
+              x: { ticks: { color: "#fff" } },
+              y: { ticks: { color: "#fff" }, beginAtZero: true },
             },
           },
-          scales: {
-            x: { ticks: { color: "#fff" } },
-            y: { ticks: { color: "#fff" }, beginAtZero: true },
-          },
-        },
+        });
       });
-    });
+    } catch (error) {
+      console.error("Failed to fetch meta data:", error);
+    }
   });
 </script>
 
@@ -128,7 +156,7 @@
 
 <div class="page-background">
   <div class="chart-grid">
-    {#each chartConfigs as config}
+    {#each createChartConfigs() as config}
       <div class="chart-box">
         <h3 class="chart-title text-white">{config.label}</h3>
         <canvas id={config.id}></canvas>
@@ -154,7 +182,6 @@
         height: 100%;
         z-index: -1;
         margin: auto auto;
-
     }
     .page-background{
       display: flex;
@@ -181,10 +208,10 @@
   .chart-box {
     background-color: #1f2937;
     border-radius: 0.5rem;
-    padding: 1rem; /* Reduced padding */
+    padding: 1rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 100%; /* Make sure cards adjust within the grid */
-    height: 100%; /* Adjust card height */
+    width: 100%;
+    height: 100%;
   }
 
   canvas {

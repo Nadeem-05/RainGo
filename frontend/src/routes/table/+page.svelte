@@ -10,7 +10,6 @@
 
   import type { main } from "$lib/wailsjs/go/models";
   import { GetEntries } from "$lib/wailsjs/go/main/App";
-  //@ts-ignore
   import { GetTotalEntries } from "$lib/wailsjs/go/main/App";
   import { onMount } from "svelte";
 

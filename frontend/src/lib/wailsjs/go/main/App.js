@@ -10,6 +10,10 @@ export function GetEntries(arg1, arg2) {
   return window['go']['main']['App']['GetEntries'](arg1, arg2);
 }
 
+export function GetMeta() {
+  return window['go']['main']['App']['GetMeta']();
+}
+
 export function GetPassword(arg1) {
   return window['go']['main']['App']['GetPassword'](arg1);
 }

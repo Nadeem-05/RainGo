@@ -6,6 +6,8 @@ export function AddEntries(arg1:Array<main.Entry>):Promise<boolean>;
 
 export function GetEntries(arg1:number,arg2:boolean):Promise<Array<main.Entry>>;
 
+export function GetMeta():Promise<Array<any>>;
+
 export function GetPassword(arg1:string):Promise<string>;
 
 export function GetTotalEntries(arg1:boolean):Promise<number>;
