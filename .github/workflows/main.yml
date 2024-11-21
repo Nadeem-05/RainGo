@@ -1,9 +1,9 @@
 name: Wails build
 
 on:
+  workflow_dispatch:
   push:
     tags:
-    # Match any new tag
       - 'main'
 
 env:
