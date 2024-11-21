@@ -17,13 +17,13 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'Rainbow Password Cracker'
+          - name: 'Raingo'
             platform:  'linux/amd64'
             os: 'ubuntu-latest'
-          - name: 'Rainbow Password Cracker'
+          - name: 'Raingo'
             platform:  'windows/amd64'
             os: 'windows-latest'
-          - name: 'Rainbow Password Cracker'
+          - name: 'Raingo'
             platform:  'darwin/universal'
             os: 'macos-latest'
 
@@ -41,7 +41,7 @@ jobs:
         uses: dAppServer/wails-build-action@v2.2
         id: build
         with:
-          build-name: ${{ matrix.build.name }}
+          build-name: 'Raingo'
           build-platform: ${{ matrix.build.platform }}
           package: false
           go-version: '1.23.2'
