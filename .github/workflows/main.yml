@@ -3,8 +3,6 @@ name: Wails build
 on:
   workflow_dispatch:
   push:
-    tags:
-      - '*'
 
 env:
   # Necessary for most environments as build failure can occur due to OOM issues
@@ -29,6 +27,7 @@ jobs:
 
     runs-on: ${{ matrix.build.os }}
     steps:
+      - uses: pnpm/action-setup@v4
       - name: Checkout
         uses: actions/checkout@v2
         with:
