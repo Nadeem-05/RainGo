@@ -15,13 +15,13 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'App'
+          - name: 'Rainbow Password Cracker'
             platform:  'linux/amd64'
             os: 'ubuntu-latest'
-          - name: 'App'
+          - name: 'Rainbow Password Cracker'
             platform:  'windows/amd64'
             os: 'windows-latest'
-          - name: 'App'
+          - name: 'Rainbow Password Cracker'
             platform:  'darwin/universal'
             os: 'macos-latest'
 
