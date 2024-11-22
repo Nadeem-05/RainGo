@@ -129,7 +129,6 @@ func (a *App) UpdateStats(isSuccess bool) {
 		return
 	}
 
-	// Update the stats
 	if isSuccess {
 		stats.SuccessRate++
 	} else {
