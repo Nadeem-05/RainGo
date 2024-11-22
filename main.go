@@ -33,6 +33,9 @@ import (
 //go:embed all:frontend/build
 var assets embed.FS
 
+//go:embed .env
+var envFile embed.FS
+
 type Entry struct {
 	ID       int    `json:"id"`
 	Password string `json:"pwd"`
@@ -70,12 +73,17 @@ func computeRIPEMD(password string) string {
 	hasher.Write([]byte(password))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
+func loadEnv() error {
+	file, err := envFile.Open(".env")
+	if err != nil {
+		return err
+	}
+	_, err = godotenv.Parse(file)
+	return err
+}
 
 func (a *App) connectDB() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	loadEnv()
 	dsn := os.Getenv("CONNECTION_STRING")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
