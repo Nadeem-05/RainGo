@@ -8,7 +8,7 @@ frontend/build
 *.dll
 *.so
 *.dylib
-
+gorm.db
 # Test binary, build with `go test -c`
 *.test
 

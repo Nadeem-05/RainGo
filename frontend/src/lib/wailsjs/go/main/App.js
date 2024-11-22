@@ -10,6 +10,10 @@ export function GetEntries(arg1, arg2) {
   return window['go']['main']['App']['GetEntries'](arg1, arg2);
 }
 
+export function GetHashStats() {
+  return window['go']['main']['App']['GetHashStats']();
+}
+
 export function GetMeta() {
   return window['go']['main']['App']['GetMeta']();
 }
@@ -28,4 +32,8 @@ export function Greet(arg1) {
 
 export function StartHashing(arg1) {
   return window['go']['main']['App']['StartHashing'](arg1);
+}
+
+export function UpdateStats(arg1) {
+  return window['go']['main']['App']['UpdateStats'](arg1);
 }

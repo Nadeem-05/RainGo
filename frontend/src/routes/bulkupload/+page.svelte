@@ -13,8 +13,6 @@
     let spinnerVisible: boolean = false;
     let fileInput: HTMLInputElement | null = null;
     let progressMessage: string = "";
-
-    // Define types for the data emitted by the backend
     type ProgressData = {
         current: number;
         total: number;
