@@ -11,8 +11,8 @@
   let meta: Meta[][] = [];
 
   let pieChartData: { category: string; count: number }[] = [];
+  let donutData: { region: string; share: number }[] = [];
   let barChartData: { region: string; share: number }[] = [];
-
   const createChartConfigs = () => {
     if (meta[0]) {
       pieChartData = meta[0].map(item => ({
@@ -22,16 +22,21 @@
     }
 
     if (meta[1]) {
-      barChartData = meta[1].map(item => ({
+      donutData = meta[1].map(item => ({
         region: item.point,
         share: parseInt(item.value)
       }));
       let dc = meta[1][1]["value"];
       let dc1 = meta[1][0]["value"];
-      barChartData.push({ region: "Others", share:  Math.round(Math.abs(Math.random() * 1000+ parseInt(dc) + parseInt(dc1)))});
+      donutData.push({ region: "Others", share:  Math.round(Math.abs(Math.random() * 1000+ parseInt(dc) + parseInt(dc1)))});
 
     }
-
+    if (meta[2]){
+      barChartData = meta[2].map(item => ({
+        region: item.point,
+        share: parseInt(item.value)
+      }));
+    }
     return [
       {
         id: "lineChart",
@@ -50,12 +55,8 @@
       {
         id: "barChart",
         type: "bar",
-        label: "Database Sources",
-        data: [
-          { region: "Online DB", share: 35 },
-          { region: "Local DB", share: 40 },
-          { region: "Others", share: 25 },
-        ],
+        label: "Success/Failure Rate",
+        data: barChartData,
       },
       {
         id: "pieChart",
@@ -67,7 +68,7 @@
         id: "doughnutChart",
         type: "doughnut",
         label: "Sources",
-        data: barChartData,
+        data: donutData,
       },
     ];
   };

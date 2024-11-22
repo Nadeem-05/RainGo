@@ -71,7 +71,7 @@
       description: `
         <div class="flex flex-col space-y-6">
           <input type="text" class="mt-5 px-4 py-3 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg" placeholder="Enter hash below" />
-          <button class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg text-lg">Submit</button>
+          <button  class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg text-lg">Submit</button>
         </div>
       `,
       href: "/checkhash",
@@ -87,7 +87,7 @@
       description: `
         <div class="flex flex-col space-y-6">
           <input type="file" class="mt-5 block w-full text-lg text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-lg file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
-          <button class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg text-lg">Upload</button>
+ <button  class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg text-lg">Upload</button>
         </div>
       `,
       href: "/bulkupload",
@@ -155,8 +155,9 @@
       <div class="card-content">
         <a href={card.href}>
           <h5 class="card-title">{card.title}</h5>
-        </a>
+
         {@html card.description}
+      </a>
       </div>
     </div>
   {/each}

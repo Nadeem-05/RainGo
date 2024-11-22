@@ -6,6 +6,7 @@ toolchain go1.23.2
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.0
+	github.com/joho/godotenv v1.5.1
 	github.com/wailsapp/wails/v2 v2.9.2
 	golang.org/x/crypto v0.29.0
 	gorm.io/driver/postgres v1.5.9
