@@ -37,7 +37,7 @@ jobs:
         with:
           submodules: recursive
       - name: Write .env file
-        run: echo "CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}" > .env
+        run: echo "CONNECTION_STRING='${{ secrets.CONNECTION_STRING }}'" > .env
       - name: Build wails
         uses: dAppServer/wails-build-action@v2.2
         id: build
