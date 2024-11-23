@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -9,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -73,18 +73,14 @@ func computeRIPEMD(password string) string {
 	hasher.Write([]byte(password))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
-func loadEnv() error {
-	file, err := envFile.Open(".env")
-	if err != nil {
-		return err
-	}
-	_, err = godotenv.Parse(file)
-	return err
-}
 
 func (a *App) connectDB() {
-	loadEnv()
-	dsn := os.Getenv("CONNECTION_STRING")
+	data, _ := envFile.ReadFile(".env")
+	myenv, err := godotenv.Parse(bytes.NewReader(data))
+	if err != nil {
+		log.Fatalf("failed to parse .env file: %v", err)
+	}
+	dsn := myenv["CONNECTION_STRING"]
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to PostgreSQL: %v", err)
