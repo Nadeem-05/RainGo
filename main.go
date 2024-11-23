@@ -301,118 +301,106 @@ func (a *App) StartHashing(passwords []string) {
 }
 func (a *App) GetMeta() [][]Meta {
 	var wg sync.WaitGroup
+	var mu sync.Mutex
 
-	pieResultChan := make(chan []Meta, 1)
-	donutresultchan := make(chan []Meta, 1)
-
-	var TotalMeta [][]Meta
+	TotalMeta := make([][]Meta, 0, 3)
+	pie := make([]Meta, 0, 4)
+	donut := make([]Meta, 0, 2)
+	bar := make([]Meta, 0, 2)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		pie := make([]Meta, 0, 4)
-
-		hashTypes := []string{"MD5", "SHA1", "SHA256", "RIPEMD"}
 
 		type HashCount struct {
-			Type  string `gorm:"column:type"`
-			Count int64  `gorm:"column:count"`
+			Type  string
+			Count int64
 		}
 
-		// Helper function to query a database and return the results
-		queryDatabase := func(db *gorm.DB) ([]HashCount, error) {
-			var hashCounts []HashCount
-			err := db.Model(&Entry{}).
-				Select("type", "COUNT(*) as count").
-				Where("type IN (?)", hashTypes).
-				Group("type").
-				Find(&hashCounts).Error
-			return hashCounts, err
-		}
+		// Use the materialized view for faster query
+		query := `
+			SELECT "type", count 
+			FROM type_counts;
+		`
 
-		// Query the main database
-		mainHashCounts, err := queryDatabase(a.db)
-		if err != nil {
-			log.Printf("Error querying hash types from main DB: %v", err)
-			pieResultChan <- pie
+		var hashCounts []HashCount
+		if err := a.db.Raw(query).Scan(&hashCounts).Error; err != nil {
+			log.Printf("Error querying materialized view: %v", err)
 			return
 		}
 
-		// Query the local database
-		localHashCounts, err := queryDatabase(a.localdb)
-		if err != nil {
-			log.Printf("Error querying hash types from local DB: %v", err)
-			pieResultChan <- pie
-			return
-		}
-
-		// Combine results from both databases
-		countMap := make(map[string]int64)
-		for _, hc := range mainHashCounts {
-			countMap[hc.Type] += hc.Count
-		}
-		for _, hc := range localHashCounts {
-			countMap[hc.Type] += hc.Count
-		}
-
-		// Populate the pie chart data
-		for _, hashType := range hashTypes {
-			count := countMap[hashType]
+		mu.Lock()
+		for _, hc := range hashCounts {
 			pie = append(pie, Meta{
-				Point: hashType,
-				Value: strconv.FormatInt(count, 10),
+				Point: hc.Type,
+				Value: strconv.FormatInt(hc.Count, 10),
 			})
 		}
-
-		pieResultChan <- pie
+		TotalMeta = append(TotalMeta, pie)
+		mu.Unlock()
 	}()
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		var localCount, globalCount int64
 
-		donut := make([]Meta, 0, 2)
-
-		var localdbCount, dbCount int64
-		localResult := a.localdb.Model(&Entry{}).Count(&localdbCount)
-		dbResult := a.db.Model(&Entry{}).Count(&dbCount)
-
-		if localResult.Error != nil {
-			log.Printf("Error querying localdb: %v", localResult.Error)
-		}
-		if dbResult.Error != nil {
-			log.Printf("Error querying db: %v", dbResult.Error)
+		// Local count (SQLite fallback if needed)
+		if err := a.localdb.Model(&Entry{}).Count(&localCount).Error; err != nil {
+			log.Printf("Error querying local count: %v", err)
 		}
 
+		// Approximate global count (or fallback to COUNT(*))
+		query := `
+			SELECT reltuples::BIGINT AS approximate_count 
+			FROM pg_class 
+			WHERE relname = 'entries';
+		`
+		if a.db.Dialector.Name() == "postgres" {
+			if err := a.db.Raw(query).Scan(&globalCount).Error; err != nil {
+				log.Printf("Error querying approximate count: %v", err)
+			}
+		} else {
+			// Fallback for SQLite
+			if err := a.db.Model(&Entry{}).Count(&globalCount).Error; err != nil {
+				log.Printf("Error querying global count: %v", err)
+			}
+		}
+
+		mu.Lock()
 		donut = append(donut,
-			Meta{Point: "LocalDB", Value: strconv.FormatInt(localdbCount, 10)},
-			Meta{Point: "Postgres", Value: strconv.FormatInt(dbCount, 10)},
+			Meta{Point: "LocalDB", Value: strconv.FormatInt(localCount, 10)},
+			Meta{Point: "Postgres", Value: strconv.FormatInt(globalCount, 10)},
 		)
-
-		donutresultchan <- donut
+		TotalMeta = append(TotalMeta, donut)
+		mu.Unlock()
 	}()
 
 	wg.Wait()
 
-	close(pieResultChan)
-	close(donutresultchan)
-
-	var bar []Meta
 	stats := a.GetHashStats()
-	bar = append(bar, Meta{Point: "Success Rate", Value: strconv.Itoa(stats.SuccessRate)})
-	bar = append(bar, Meta{Point: "Failure Rate", Value: strconv.Itoa(stats.FailureRate)})
-	TotalMeta = append(TotalMeta, <-pieResultChan)
-	TotalMeta = append(TotalMeta, <-donutresultchan)
+	bar = append(bar,
+		Meta{Point: "Success Rate", Value: strconv.Itoa(stats.SuccessRate)},
+		Meta{Point: "Failure Rate", Value: strconv.Itoa(stats.FailureRate)},
+	)
+
+	mu.Lock()
 	TotalMeta = append(TotalMeta, bar)
+	mu.Unlock()
+
 	return TotalMeta
 }
+
 func (a *App) GetTotalEntries(usePostgres bool) int64 {
 	var total int64
 	if usePostgres {
-		err := a.db.Model(&Entry{}).Count(&total).Error
-		if err != nil {
-			runtime.LogError(a.ctx, "Error counting total entries: "+err.Error())
-			return 0
+		query := `
+		SELECT reltuples::BIGINT AS approximate_count 
+		FROM pg_class 
+		WHERE relname = 'entries';
+	`
+		if err := a.db.Raw(query).Scan(&total).Error; err != nil {
+			log.Printf("Error querying approximate count: %v", err)
 		}
 		return total
 	}
