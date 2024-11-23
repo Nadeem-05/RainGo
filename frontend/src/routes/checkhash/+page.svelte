@@ -45,25 +45,18 @@
 <div>
     <Navbar rounded class="bg-transparent dark">
       <NavBrand href="/">
-        <img
-          src="src/images/favicon.png"
-          class="me-3 h-6 sm:h-9"
-          alt="Flowbite Logo"
-        />
         <span class="self-center text-xl font-semibold dark:text-white"
-          >Flowbite</span
+          >Raingo</span
         >
       </NavBrand>
       <NavHamburger />
       <NavUl>
         <NavLi href="/" activeClass="active" class="dark:text-white">Home</NavLi>
-        <NavLi href="/about" class="dark:text-white">About</NavLi>
-        <NavLi href="/docs/components/navbar" class="dark:text-white"
-          >Navbar</NavLi
-        >
-        <NavLi href="/pricing" class="dark:text-white">Pricing</NavLi>
-        <NavLi href="/contact" class="dark:text-white">Contact</NavLi>
-      </NavUl>
+        <NavLi href="/checkhash" class="dark:text-white">Converter</NavLi>
+        <NavLi href="/chart" class="dark:text-white">Stats</NavLi>
+        <NavLi href="/bulkupload" class="dark:text-white">Upload</NavLi>
+        <NavLi href="/table" class="dark:text-white">Table</NavLi>
+    </NavUl>
     </Navbar>
   </div>
 

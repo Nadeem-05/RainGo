@@ -127,24 +127,17 @@
 <div>
   <Navbar rounded class="bg-transparent dark">
     <NavBrand href="/">
-      <img
-        src="src/images/favicon.png"
-        class="me-3 h-6 sm:h-9"
-        alt="Flowbite Logo"
-      />
       <span class="self-center text-xl font-semibold dark:text-white"
-        >Flowbite</span
+        >Raingo</span
       >
     </NavBrand>
     <NavHamburger />
     <NavUl>
       <NavLi href="/" activeClass="active" class="dark:text-white">Home</NavLi>
-      <NavLi href="/about" class="dark:text-white">About</NavLi>
-      <NavLi href="/docs/components/navbar" class="dark:text-white"
-        >Navbar</NavLi
-      >
-      <NavLi href="/pricing" class="dark:text-white">Pricing</NavLi>
-      <NavLi href="/contact" class="dark:text-white">Contact</NavLi>
+      <NavLi href="/checkhash" class="dark:text-white">Converter</NavLi>
+      <NavLi href="/chart" class="dark:text-white">Stats</NavLi>
+      <NavLi href="/bulkupload" class="dark:text-white">Upload</NavLi>
+      <NavLi href="/table" class="dark:text-white">Table</NavLi>
     </NavUl>
   </Navbar>
 </div>
@@ -156,91 +149,90 @@
         <a href={card.href}>
           <h5 class="card-title">{card.title}</h5>
 
-        {@html card.description}
-      </a>
+          {@html card.description}
+        </a>
       </div>
     </div>
   {/each}
 </div>
 
 <style>
-   :global(html) {
-        background-image: linear-gradient(
-            0deg,
-            rgba(32, 42, 68, 1) 25%,
-            rgba(9, 22, 46, 1) 50%,
-            rgba(0, 1, 25, 1) 75%,
-            rgba(0, 0, 0, 1) 100%
-        );
-        animation: slide 3s ease-in-out infinite alternate;
-        background-attachment: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        margin: auto auto;
+  :global(html) {
+    background-image: linear-gradient(
+      0deg,
+      rgba(32, 42, 68, 1) 25%,
+      rgba(9, 22, 46, 1) 50%,
+      rgba(0, 1, 25, 1) 75%,
+      rgba(0, 0, 0, 1) 100%
+    );
+    animation: slide 3s ease-in-out infinite alternate;
+    background-attachment: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    margin: auto auto;
+  }
 
+  :global(.app-container) {
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+    overflow-x: hidden;
+  }
+
+  /* Main content container */
+  .grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+    position: relative;
+    margin: auto auto;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .grid-container {
+      grid-template-columns: 1fr;
+      padding: 1rem;
+      padding-bottom: 2rem;
     }
 
-:global(.app-container) {
-  min-height: 100vh;
-  position: relative;
-  z-index: 1;
-  overflow-x: hidden;
-}
-
-/* Main content container */
-.grid-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-  position: relative;
-  margin:auto auto;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .grid-container {
-    grid-template-columns: 1fr;
-    padding: 1rem;
-    padding-bottom: 2rem;
+    :global(.card) {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
   }
 
-  :global(.card) {
+  .card {
+    background-color: #1f2937;
+    border-radius: 0.5rem;
+    padding: 2.5rem;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .chart-container {
     width: 100%;
-    margin-bottom: 1rem;
+    max-width: 100%;
+    height: 300px;
+    margin: 0 auto;
   }
-}
 
-.card {
-  background-color: #1f2937;
-  border-radius: 0.5rem;
-  padding: 2.5rem;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.3s ease;
-}
-
-.card:hover {
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.chart-container {
-  width: 100%;
-  max-width: 100%;
-  height: 300px;
-  margin: 0 auto;
-}
-
-/* Fix for mobile scrolling */
-:global(body) {
-  -webkit-overflow-scrolling: touch;
-}
+  /* Fix for mobile scrolling */
+  :global(body) {
+    -webkit-overflow-scrolling: touch;
+  }
 </style>
