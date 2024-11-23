@@ -36,10 +36,9 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
-          
       - name: Write .env file
         run: |
-          if [[ ${{ matrix.build.os }} == "windows/amd64" ]]; then
+          if [[ ${{ matrix.build.os }} == "windows-latest" ]]; then
             echo "CONNECTION_STRING='${{ secrets.CONNECTION_STRING }}'" > $GITHUB_WORKSPACE\\.env
           else
             echo "CONNECTION_STRING='${{ secrets.CONNECTION_STRING }}'" > $GITHUB_WORKSPACE/.env
