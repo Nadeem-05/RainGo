@@ -38,7 +38,13 @@ jobs:
           submodules: recursive
           
       - name: Write .env file
-        run: echo "CONNECTION_STRING='${{ secrets.CONNECTION_STRING }}'" > $GITHUB_WORKSPACE/.env
+        run: |
+          if [[ ${{ matrix.build.os }} == "windows/amd64" ]]; then
+            echo "CONNECTION_STRING='${{ secrets.CONNECTION_STRING }}'" > $GITHUB_WORKSPACE\\.env
+          else
+            echo "CONNECTION_STRING='${{ secrets.CONNECTION_STRING }}'" > $GITHUB_WORKSPACE/.env
+          fi
+        shell: bash
       - name: Build wails
         uses: dAppServer/wails-build-action@v2.2
         id: build
