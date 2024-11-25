@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -35,6 +34,9 @@ var assets embed.FS
 
 //go:embed .env
 var envFile embed.FS
+
+//go:embed build/appicon.png
+var icon []byte
 
 type Entry struct {
 	ID       int    `json:"id"`
@@ -108,11 +110,11 @@ func (a *App) connectDB() {
 	}
 	a.db = db
 	a.localdb = localdb
-	log.Println("Databases connected successfully!")
+	log.Printf("Databases connected successfully!")
 }
 
 func (a *App) UpdateStats(isSuccess bool) {
-	fmt.Print("Updating stats")
+	log.Printf("Updating stats")
 	var stats HashStats
 	if err := a.db.First(&stats).Error; err == gorm.ErrRecordNotFound {
 		stats = HashStats{SuccessRate: 0, FailureRate: 0}
@@ -239,8 +241,7 @@ func (a *App) StartHashing(passwords []string) {
 
 	workers := 4
 	var wg sync.WaitGroup
-	var processedCount int64 // Tracks progress
-
+	var processedCount int64
 	worker := func() {
 		defer wg.Done()
 		for password := range passwordChan {
@@ -257,13 +258,11 @@ func (a *App) StartHashing(passwords []string) {
 		}
 	}
 
-	// Start workers
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		go worker()
 	}
 
-	// Producer goroutine
 	go func() {
 		for _, password := range passwords {
 			passwordChan <- password
@@ -293,8 +292,6 @@ func (a *App) StartHashing(passwords []string) {
 				runtime.LogError(a.ctx, "Error during final batch insertion")
 			}
 		}
-
-		// Emit completion event
 		runtime.EventsEmit(a.ctx, "hashingCompleted")
 		log.Println("Hashing and database insertion completed.")
 	}()
@@ -484,11 +481,14 @@ func main() {
 			About: &mac.AboutInfo{
 				Title:   "Raingo",
 				Message: "idk",
-				// Icon:    icon,
+				Icon:    icon,
 			},
+			Preferences: &mac.Preferences{
+				TextInteractionEnabled: mac.Disabled,
+		},
 		},
 		Linux: &linux.Options{
-			// Icon:                icon,
+			Icon:                icon,
 			WindowIsTranslucent: false,
 			WebviewGpuPolicy:    linux.WebviewGpuPolicyAlways,
 			ProgramName:         "Raingo",

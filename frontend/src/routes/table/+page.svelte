@@ -127,7 +127,7 @@
       classSvgDiv="hidden"
       placeholder="Search by maker name"
       hoverable={true}
-      class="dark w-full  mx-auto mb-5 shadow-md rounded-lg"
+      class="dark w-full  mx-auto mb-5 shadow-md rounded-lg select-text "
     >
       <TableHead>
         <TableHeadCell>ID</TableHeadCell>
@@ -201,7 +201,6 @@
   .container {
     padding: 1rem;
   }
-
   .dark {
     color: white;
   }

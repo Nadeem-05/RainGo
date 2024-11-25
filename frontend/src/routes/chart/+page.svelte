@@ -2,7 +2,13 @@
   import { onMount } from "svelte";
   import Chart from "chart.js/auto";
   import { GetMeta } from "$lib/wailsjs/go/main/App";
- import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from "flowbite-svelte";
+  import {
+    Navbar,
+    NavBrand,
+    NavLi,
+    NavUl,
+    NavHamburger,
+  } from "flowbite-svelte";
   interface Meta {
     point: string;
     value: string;
@@ -15,26 +21,30 @@
   let barChartData: { region: string; share: number }[] = [];
   const createChartConfigs = () => {
     if (meta[0]) {
-      pieChartData = meta[0].map(item => ({
+      pieChartData = meta[0].map((item) => ({
         category: item.point,
-        count: parseInt(item.value)
+        count: parseInt(item.value),
       }));
     }
 
     if (meta[1]) {
-      donutData = meta[1].map(item => ({
+      donutData = meta[1].map((item) => ({
         region: item.point,
-        share: parseInt(item.value)
+        share: parseInt(item.value),
       }));
       let dc = meta[1][1]["value"];
       let dc1 = meta[1][0]["value"];
-      donutData.push({ region: "Others", share:  Math.round(Math.abs(Math.random() * 1000+ parseInt(dc) + parseInt(dc1)))});
-
+      donutData.push({
+        region: "Others",
+        share: Math.round(
+          Math.abs(Math.random() * 1000 + parseInt(dc) + parseInt(dc1)),
+        ),
+      });
     }
-    if (meta[2]){
-      barChartData = meta[2].map(item => ({
+    if (meta[2]) {
+      barChartData = meta[2].map((item) => ({
         region: item.point,
-        share: parseInt(item.value)
+        share: parseInt(item.value),
       }));
     }
     return [
@@ -81,21 +91,24 @@
 
       // Create charts after data is fetched
       const chartConfigs = createChartConfigs();
-      
+
       chartConfigs.forEach((config) => {
         const ctx = document.getElementById(config.id) as HTMLCanvasElement;
         if (!ctx) return;
 
         new Chart(ctx, {
+          //@ts-ignore
           type: config.type,
           data: {
             labels: config.data.map(
+              //@ts-ignore
               (row) => row.year || row.category || row.region,
             ),
             datasets: [
               {
                 label: config.label,
                 data: config.data.map(
+                  //@ts-ignore
                   (row) => row.count || row.sales || row.share,
                 ),
                 backgroundColor: [
@@ -136,8 +149,7 @@
 
 <Navbar rounded class="bg-transparent dark">
   <NavBrand href="/">
-    <span class="self-center text-xl font-semibold dark:text-white"
-      >Raingo</span
+    <span class="self-center text-xl font-semibold dark:text-white">Raingo</span
     >
   </NavBrand>
   <NavHamburger />
@@ -162,27 +174,27 @@
 </div>
 
 <style type="postcss">
-   :global(html) {
-        background-image: linear-gradient(
-            0deg,
-            rgba(32, 42, 68, 1) 25%,
-            rgba(9, 22, 46, 1) 50%,
-            rgba(0, 1, 25, 1) 75%,
-            rgba(0, 0, 0, 1) 100%
-        );
-        animation: slide 3s ease-in-out infinite alternate;
-        background-attachment: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        margin: auto auto;
-    }
-    .page-background{
-      display: flex;
-      justify-content: center;
-    }
+  :global(html) {
+    background-image: linear-gradient(
+      0deg,
+      rgba(32, 42, 68, 1) 25%,
+      rgba(9, 22, 46, 1) 50%,
+      rgba(0, 1, 25, 1) 75%,
+      rgba(0, 0, 0, 1) 100%
+    );
+    animation: slide 3s ease-in-out infinite alternate;
+    background-attachment: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    margin: auto auto;
+  }
+  .page-background {
+    display: flex;
+    justify-content: center;
+  }
 
   @keyframes slide {
     0% {

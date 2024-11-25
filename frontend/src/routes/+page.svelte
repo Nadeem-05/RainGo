@@ -12,13 +12,13 @@
   onMount(() => {
     if (typeof document !== "undefined") {
       const data = [
-        { year: 2010, count: 10 },
-        { year: 2011, count: 20 },
-        { year: 2012, count: 15 },
-        { year: 2013, count: 25 },
-        { year: 2014, count: 22 },
-        { year: 2015, count: 30 },
-        { year: 2016, count: 28 },
+        { year: 0, count: 21000 },
+          { year: 15, count: 23000 },
+          { year: 30, count: 34000 },
+          { year: 45, count: 43000 },
+          { year: 60, count: 26902 },
+          { year: 75, count: 34560 },
+          { year: 90, count: 13494 },
       ];
 
       const ctx = document.getElementById("acquisitions") as HTMLCanvasElement;
@@ -28,7 +28,7 @@
           labels: data.map((row) => row.year),
           datasets: [
             {
-              label: "Acquisitions by year",
+              label: "Hashes added over time",
               data: data.map((row) => row.count),
               backgroundColor: "rgba(54, 162, 235, 0.2)",
               borderColor: "rgba(54, 162, 235, 1)",
@@ -95,29 +95,8 @@
     {
       title: "Table Data",
       description: `
-        <div class="mt-5 overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr>
-                <th class="p-3 border text-left text-lg">Header 1</th>
-                <th class="p-3 border text-left text-lg">Header 2</th>
-                <th class="p-3 border text-left text-lg">Header 3</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="p-3 border text-lg">Data 1</td>
-                <td class="p-3 border text-lg">Data 2</td>
-                <td class="p-3 border text-lg">Data 3</td>
-              </tr>
-              <tr>
-                <td class="p-3 border text-lg">Data 4</td>
-                <td class="p-3 border text-lg">Data 5</td>
-                <td class="p-3 border text-lg">Data 6</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <p class="mt-5 text-md block text-gray-400">View hashes in local and online database</p>
+          <button class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-32 mt-12 rounded-lg text-lg">View</button>
       `,
       href: "/table",
     },
@@ -173,6 +152,9 @@
     height: 100%;
     z-index: -1;
     margin: auto auto;
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+    -ms-user-select: none;     /* For Internet Explorer/Edge */
   }
 
   :global(.app-container) {
@@ -223,7 +205,6 @@
       0 10px 15px -3px rgba(0, 0, 0, 0.1),
       0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
-
   .chart-container {
     width: 100%;
     max-width: 100%;
