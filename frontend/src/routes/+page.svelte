@@ -13,12 +13,12 @@
     if (typeof document !== "undefined") {
       const data = [
         { year: 0, count: 21000 },
-          { year: 15, count: 23000 },
-          { year: 30, count: 34000 },
-          { year: 45, count: 43000 },
-          { year: 60, count: 26902 },
-          { year: 75, count: 34560 },
-          { year: 90, count: 13494 },
+        { year: 15, count: 23000 },
+        { year: 30, count: 34000 },
+        { year: 45, count: 43000 },
+        { year: 60, count: 26902 },
+        { year: 75, count: 34560 },
+        { year: 90, count: 13494 },
       ];
 
       const ctx = document.getElementById("acquisitions") as HTMLCanvasElement;
@@ -154,9 +154,11 @@
     margin: auto auto;
     user-select: none;
     -webkit-user-select: none; /* For Safari */
-    -ms-user-select: none;     /* For Internet Explorer/Edge */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
   }
-
+  :global(input, textarea) {
+    user-select: text;
+  }
   :global(.app-container) {
     min-height: 100vh;
     position: relative;
@@ -205,6 +207,7 @@
       0 10px 15px -3px rgba(0, 0, 0, 0.1),
       0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
+
   .chart-container {
     width: 100%;
     max-width: 100%;
