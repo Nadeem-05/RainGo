@@ -100,15 +100,6 @@ func (a *App) connectDB() {
 	sqldb.SetMaxOpenConns(100)
 	sqldb.SetConnMaxLifetime(time.Hour)
 
-	if err := db.AutoMigrate(&Entry{}); err != nil {
-		log.Fatalf("Failed to migrate PostgreSQL schema: %v", err)
-	}
-	if err := localdb.AutoMigrate(&Entry{}); err != nil {
-		log.Fatalf("Failed to migrate SQLite schema: %v", err)
-	}
-	if err := db.AutoMigrate(&HashStats{}); err != nil {
-		log.Fatalf("Failed to migrate PostgreSQL schema for HashStats: %v", err)
-	}
 	a.db = db
 	a.localdb = localdb
 	log.Printf("Databases connected successfully!")
@@ -465,9 +456,7 @@ func main() {
 		LogLevel:                         logger.ERROR,
 		LogLevelProduction:               logger.ERROR,
 		Frameless:                        false,
-		Windows : &windows.Options{
-			
-		},
+		Windows:                          &windows.Options{},
 		Mac: &mac.Options{
 			TitleBar: &mac.TitleBar{
 				TitlebarAppearsTransparent: true,
@@ -489,7 +478,7 @@ func main() {
 			},
 			Preferences: &mac.Preferences{
 				TextInteractionEnabled: mac.Disabled,
-		},
+			},
 		},
 		Linux: &linux.Options{
 			Icon:                icon,
