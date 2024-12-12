@@ -3,7 +3,7 @@
 RainGo is an open-source password recovery and analysis tool written in Go, leveraging **rainbow tables** for efficient hash cracking. It is packaged as a user-friendly desktop application using the Wails framework.
 
 ---
-
+<img src="https://i.ibb.co/nM3gNSw/Screenshot-From-2024-12-12-21-04-02.png" alt="Raingo Desktop" border="0"></img>
 ## Features
 
 - **Rainbow Table Management**: Generate, store, and use precomputed rainbow tables for various hash algorithms.
