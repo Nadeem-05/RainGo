@@ -90,8 +90,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - **Nadeem**  
   GitHub: [Nadeem-05](https://github.com/Nadeem-05)  
-  Email: nadeem@example.com (replace with actual contact details if applicable)
-
+  Email: m.nadeem83005@gmail.com
 ---
 
 ## Acknowledgments
